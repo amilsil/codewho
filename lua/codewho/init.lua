@@ -1,4 +1,4 @@
-print("loading codeowners plugin")
+print("Codewho: loading")
 
 local M = {}
 M.codeowners_table = {}
@@ -20,7 +20,7 @@ local read_codeowners_file = function()
     return result
   else
     M.codeowners_exists = false
-    return "noowner"
+    return ""
   end
 end
 
@@ -39,24 +39,27 @@ end
 local delete_last_path_segment = function(path)
   local last_slash_index = path:find("/[^/]*$")
   if last_slash_index then
-    return path:sub(1, last_slash_index- 1)
+    return path:sub(1, last_slash_index - 1)
   else
     return nil
   end
 end
 
 local find_owner_of_file = function(buffer_name)
-  print("finding owner of file: " .. buffer_name)
   local codeowners = parse_codeowners()
   local path = buffer_name
 
   while (path ~= nil) do
-    print("path is: " .. path)
-    local owner = codeowners[path] or codeowners[path .. "/"]
+    local owner = codeowners[path] or codeowners[path .. "/"] or codeowners[path .. "/*"]
     if owner then
       return owner
     end
+
     path = delete_last_path_segment(path)
+  end
+
+  if (codeowners["*"] ~= nil) then
+    return codeowners["*"]
   end
 
   return "noowner"
@@ -74,7 +77,8 @@ M.codewho = function()
     M.codeowners_table[buffer_name] = owner
   end
 
-  return M.codeowners_table[buffer_name]
+  local owner = M.codeowners_table[buffer_name]
+  return owner
 end
 
 return M
